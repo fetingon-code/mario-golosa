@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Invasión de Pulgas - Fernando</title>
+    <style>
+        body { 
+            margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; 
+            background: #444 url("fondo_piso.jpg") repeat; background-size: 150px;
+            touch-action: none; cursor: crosshair;
+        }
+        #ui { 
+            position: fixed; top: 10px; left: 10px; color: white; font-weight: bold;
+            background: rgba(0,0,0,0.8); padding: 12px; border-radius: 10px; z-index: 100;
+            font-size: 22px; pointer-events: none;
+        }
+        #target { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 110px; height: 110px; border: 3px dashed rgba(255,255,0,0.5); border-radius: 50%;
+            background: url("objetivo.png") no-repeat center; background-size: contain; z-index: 10;
+        }
+        .enemy { 
+            position: absolute; width: 75px; height: 75px; 
+            background: url("pulga_cara.jpg") no-repeat center; 
+            background-size: contain; z-index: 50; filter: drop-shadow(2px 2px 5px black);
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui">Puntos: <span id="scr">0</span> | Vidas: <span id="vds">5</span></div>
+<div id="target"></div>
+
+<audio id="aud_pum" src="golpe.mp3"></audio>
+<audio id="aud_bg" src="musica.mp3" loop></audio>
+
+<script>
+    var pts = 0, vds = 5, vel = 2.2, vivo = true, audioOk = false;
+    
+    // Función para crear pulgas
+    setInterval(function() {
+        if(!vivo) return;
+        var p = document.createElement("div");
+        p.className = "enemy";
+        var lado = Math.floor(Math.random()*4), x, y, off = 80;
+        if(lado==0){ x=-off; y=Math.random()*window.innerHeight; }
+        if(lado==1){ x=window.innerWidth; y=Math.random()*window.innerHeight; }
+        if(lado==2){ x=Math.random()*window.innerWidth; y=-off; }
+        if(lado==3){ x=Math.random()*window.innerWidth; y=window.innerHeight; }
+        p.style.left = x+"px"; p.style.top = y+"px";
+        document.body.appendChild(p);
+
+        // Movimiento hacia el centro
+        var m = setInterval(function() {
+            if(!vivo){ p.remove(); clearInterval(m); return; }
+            x += (window.innerWidth/2 - (x+37)) * 0.01 * vel;
+            y += (window.innerHeight/2 - (y+37)) * 0.01 * vel;
+            p.style.left = x+"px"; p.style.top = y+"px";
+
+            // Si la pulga llega al centro
+            if(Math.abs((x+37)-window.innerWidth/2)<55 && Math.abs((y+37)-window.innerHeight/2)<55) {
+                vds--; document.getElementById("vds").innerText = vds;
+                p.remove(); clearInterval(m);
+                if(vds<=0){ vivo=false; alert("¡GAME OVER!\nPulgas eliminadas: "+pts); location.reload(); }
+            }
+        }, 20);
+
+        // Al tocar la pulga
+        p.onclick = function() {
+            if(!audioOk){ 
+                document.getElementById("aud_bg").play().catch(e=>{}); 
+                audioOk = true; 
+            }
+            var s = document.getElementById("aud_pum");
+            s.currentTime = 0; s.play().catch(e=>{});
+            pts++; document.getElementById("scr").innerText = pts;
+            p.remove(); clearInterval(m);
+            if(pts%5==0) vel += 0.4; // Aumenta la velocidad cada 5 puntos
+        };
+    }, 900);
+</script>
+</body>
+</html>
